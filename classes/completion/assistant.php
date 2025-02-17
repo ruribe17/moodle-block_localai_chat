@@ -124,7 +124,16 @@ class assistant extends \block_openai_chat\completion {
 
         $run_id = $response->id;
         $run_completed = false;
+        $iters = 0;
         while (!$run_completed) {
+            $iters++;
+            if ($iters >= 60) {
+                return [
+                    "id" => 0,
+                    "message" => get_string('openaitimedout', 'block_cloudlearn_ai'),
+                    "thread_id" => 0
+                ];
+            }
             $run_completed = $this->check_run_status($run_id);
             sleep(1);
         }
@@ -160,7 +169,7 @@ class assistant extends \block_openai_chat\completion {
         $response = $curl->get("https://api.openai.com/v1/threads/" . $this->thread_id . "/runs/" . $run_id);
         $response = json_decode($response);
         
-        if ($response->status === 'completed') {
+        if ($response->status === 'completed' || property_exists($response, 'error')) {
             return true;
         }
         return false;
