@@ -131,3 +131,4 @@ $string['sourceoftruthreinforcement'] = ' The assistant has been trained to answ
 $string['new_chat'] = 'New chat';
 $string['popout'] = 'Open chat window';
 $string['loggingenabled'] = "Logging is enabled. Any messages you send or receive here will be recorded, and can be viewed by the site administrator.";
+$string['openaitimedout'] = 'ERROR: OpenAI did not provide a response in time.';
