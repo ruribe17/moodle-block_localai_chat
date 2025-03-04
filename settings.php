@@ -19,6 +19,7 @@
  *
  * @package    block_localai_chat
  * @copyright  2024 Bryce Yoder <me@bryceyoder.com>
+ * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename at block_localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -28,16 +29,16 @@ if ($hassiteconfig) {
 
     if (!defined('BEHAT_SITE_RUNNING')) {
         $ADMIN->add('reports', new admin_externalpage(
-            'openai_chat_report', 
-            get_string('openai_chat_logs', 'block_localai_chat'), 
-            new moodle_url("$CFG->wwwroot/blocks/openai_chat/report.php", ['courseid' => 1]),
+            'localai_chat_report', 
+            get_string('localai_chat_logs', 'block_localai_chat'), 
+            new moodle_url("$CFG->wwwroot/blocks/localai_chat/report.php", ['courseid' => 1]),
             'moodle/site:config'
         ));
     }
 
     if ($ADMIN->fulltree) {
 
-        require_once($CFG->dirroot .'/blocks/openai_chat/lib.php');
+        require_once($CFG->dirroot .'/blocks/localai_chat/lib.php');
 
         $type = get_type_to_display();
         $assistant_array = [];
