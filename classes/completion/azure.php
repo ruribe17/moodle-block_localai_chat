@@ -17,17 +17,18 @@
 /**
  * Class providing completions for Azure
  *
- * @package    block_openai_chat
+ * @package    block_localai_chat
  * @copyright  2024 Bryce Yoder <me@bryceyoder.com>
+ * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename to localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 */
 
-namespace block_openai_chat\completion;
+namespace block_localai_chat\completion;
 
-use block_openai_chat\completion;
+use block_localai_chat\completion;
 defined('MOODLE_INTERNAL') || die;
 
-class azure extends \block_openai_chat\completion\chat {
+class azure extends \block_localai_chat\completion\chat {
 
     private $resourcename;
     private $deploymentid;
@@ -48,7 +49,7 @@ class azure extends \block_openai_chat\completion\chat {
     public function create_completion($context) {
         if ($this->sourceoftruth) {
             $this->sourceoftruth = format_string($this->sourceoftruth, true, ['context' => $context]);
-            $this->prompt .= get_string('sourceoftruthreinforcement', 'block_openai_chat');
+            $this->prompt .= get_string('sourceoftruthreinforcement', 'block_localai_chat');
         }
         $this->prompt .= "\n\n";
 
@@ -88,7 +89,7 @@ class azure extends \block_openai_chat\completion\chat {
         ));
 
         $response = $curl->post(
-            "https://" . $this->resourcename . ".openai.azure.com/openai/deployments/" . $this->deploymentid . "/chat/completions?api-version=" . $this->apiversion, 
+            "https://" . $this->resourcename . ".localai.azure.com/localai/deployments/" . $this->deploymentid . "/chat/completions?api-version=" . $this->apiversion, 
             json_encode($curlbody)
         );
         $response = json_decode($response);

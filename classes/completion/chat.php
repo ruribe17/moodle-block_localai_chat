@@ -17,17 +17,18 @@
 /**
  * Class providing completions for chat models (3.5 and up)
  *
- * @package    block_openai_chat
+ * @package    block_localai_chat
  * @copyright  2023 Bryce Yoder <me@bryceyoder.com>
+ * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename to localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 */
 
-namespace block_openai_chat\completion;
+namespace block_localai_chat\completion;
 
-use block_openai_chat\completion;
+use block_localai_chat\completion;
 defined('MOODLE_INTERNAL') || die;
 
-class chat extends \block_openai_chat\completion {
+class chat extends \block_localai_chat\completion {
 
     public function __construct($model, $message, $history, $block_settings, $thread_id = null) {
         parent::__construct($model, $message, $history, $block_settings);
@@ -35,12 +36,12 @@ class chat extends \block_openai_chat\completion {
 
     /**
      * Given everything we know after constructing the parent, create a completion by constructing the prompt and making the api call
-     * @return JSON: The API response from OpenAI
+     * @return JSON: The API response from localai
      */
     public function create_completion($context) {
         if ($this->sourceoftruth) {
             $this->sourceoftruth = format_string($this->sourceoftruth, true, ['context' => $context]);
-            $this->prompt .= get_string('sourceoftruthreinforcement', 'block_openai_chat');
+            $this->prompt .= get_string('sourceoftruthreinforcement', 'block_localai_chat');
         }
         $this->prompt .= "\n\n";
 
@@ -68,8 +69,8 @@ class chat extends \block_openai_chat\completion {
     }
 
     /**
-     * Make the actual API call to OpenAI
-     * @return JSON: The response from OpenAI
+     * Make the actual API call to localai
+     * @return JSON: The response from localai
      */
     private function make_api_call($history) {
         $curlbody = [
@@ -91,7 +92,7 @@ class chat extends \block_openai_chat\completion {
             ),
         ));
 
-        $response = $curl->post("https://api.openai.com/v1/chat/completions", json_encode($curlbody));
+        $response = $curl->post("https://api.localai.com/v1/chat/completions", json_encode($curlbody));
         $response = json_decode($response);
 
         $message = null;
