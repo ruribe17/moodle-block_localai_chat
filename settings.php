@@ -19,7 +19,7 @@
  *
  * @package    block_localai_chat
  * @copyright  2024 Bryce Yoder <me@bryceyoder.com>
- * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename at block_localai_chat)
+ * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename to localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
