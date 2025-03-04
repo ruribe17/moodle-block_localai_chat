@@ -17,8 +17,9 @@
 /**
  * General plugin functions
  *
- * @package    block_openai_chat
+ * @package    block_localai_chat
  * @copyright  2023 Bryce Yoder <me@bryceyoder.com>
+ * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename to localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -29,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  * @return String: the API type (chat|azure|assistant)
  */
 function get_type_to_display() {
-    $stored_type = get_config('block_openai_chat', 'type');
+    $stored_type = get_config('block_localai_chat', 'type');
     if ($stored_type) {
         return $stored_type;
     }
@@ -38,7 +39,7 @@ function get_type_to_display() {
 }
 
 /**
- * Use an API key to fetch a list of assistants from a user's OpenAI account
+ * Use an API key to fetch a list of assistants from a user's localai account
  * @param Int (optional): The ID of a block instance. If this is passed, the API can be pulled from the block rather than the site level.
  * @return Array: The list of assistants
  */
@@ -46,11 +47,11 @@ function fetch_assistants_array($block_id = null) {
     global $DB;
 
     if (!$block_id) {
-        $apikey = get_config('block_openai_chat', 'apikey');
+        $apikey = get_config('block_localai_chat', 'apikey');
     } else {
-        $instance_record = $DB->get_record('block_instances', ['blockname' => 'openai_chat', 'id' => $block_id], '*');
-        $instance = block_instance('openai_chat', $instance_record);
-        $apikey = $instance->config->apikey ? $instance->config->apikey : get_config('block_openai_chat', 'apikey');
+        $instance_record = $DB->get_record('block_instances', ['blockname' => 'localai_chat', 'id' => $block_id], '*');
+        $instance = block_instance('localai_chat', $instance_record);
+        $apikey = $instance->config->apikey ? $instance->config->apikey : get_config('block_localai_chat', 'apikey');
     }
 
     if (!$apikey) {
@@ -62,11 +63,11 @@ function fetch_assistants_array($block_id = null) {
         'CURLOPT_HTTPHEADER' => array(
             'Authorization: Bearer ' . $apikey,
             'Content-Type: application/json',
-            'OpenAI-Beta: assistants=v2'
+            'localai-Beta: assistants=v2'
         ),
     ));
 
-    $response = $curl->get("https://api.openai.com/v1/assistants?order=desc");
+    $response = $curl->get("https://api.localai.com/v1/assistants?order=desc");
     $response = json_decode($response);
     $assistant_array = [];
     if (property_exists($response, 'data')) {
@@ -80,7 +81,7 @@ function fetch_assistants_array($block_id = null) {
 
 /**
  * Return a list of available models, and the type of each model.
- * (Type used to be relevant before OpenAI released the Assistant API. Currently it is no longer useful as all models are of type "chat,"
+ * (Type used to be relevant before localai released the Assistant API. Currently it is no longer useful as all models are of type "chat,"
  * but I left it here in case the API is changed significantly in the future)
  * @return Array: The list of model info
  */
@@ -141,11 +142,11 @@ function get_models() {
 function log_message($usermessage, $airesponse, $context) {
     global $USER, $DB;
 
-    if (!get_config('block_openai_chat', 'logging')) {
+    if (!get_config('block_localai_chat', 'logging')) {
         return;
     }
 
-    $DB->insert_record('block_openai_chat_log', (object) [
+    $DB->insert_record('block_localai_chat_log', (object) [
         'userid' => $USER->id,
         'usermessage' => $usermessage,
         'airesponse' => $airesponse,
@@ -154,11 +155,11 @@ function log_message($usermessage, $airesponse, $context) {
     ]);
 }
 
-function block_openai_chat_extend_navigation_course($nav, $course, $context) {
+function block_localai_chat_extend_navigation_course($nav, $course, $context) {
     if ($nav->get('coursereports')) {
         $nav->get('coursereports')->add(
-            get_string('openai_chat_logs', 'block_openai_chat'),
-            new moodle_url('/blocks/openai_chat/report.php', ['courseid' => $course->id]),
+            get_string('localai_chat_logs', 'block_localai_chat'),
+            new moodle_url('/blocks/localai_chat/report.php', ['courseid' => $course->id]),
             navigation_node::TYPE_SETTING,
             null
         );
