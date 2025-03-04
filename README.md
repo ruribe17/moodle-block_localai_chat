@@ -71,7 +71,7 @@ Contributions are welcome! If you would like to contribute to this project, feel
 
 ## License
 
-This project is licensed under the GPL3 License.
+This project is licensed under the GPL-3 License.
 
 ---
 
