@@ -17,13 +17,12 @@
 /**
  * Privacy API Provider
  *
- * @package    block_localai_chat
+ * @package    block_openai_chat
  * @copyright  2024 Bryce Yoder <me@bryceyoder.com>
- * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename to localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace block_localai_chat\privacy;
+namespace block_openai_chat\privacy;
 
 use \core_privacy\local\metadata\collection;
 use \core_privacy\local\request\writer;
@@ -41,14 +40,14 @@ class provider implements
 
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table(
-            'block_localai_chat_log',
+            'block_openai_chat_log',
              [
-                'userid' => 'privacy:metadata:localai_chat_log:userid',
-                'usermessage' => 'privacy:metadata:localai_chat_log:usermessage',
-                'airesponse' => 'privacy:metadata:localai_chat_log:airesponse',
-                'timecreated' => 'privacy:metadata:localai_chat_log:timecreated'
+                'userid' => 'privacy:metadata:openai_chat_log:userid',
+                'usermessage' => 'privacy:metadata:openai_chat_log:usermessage',
+                'airesponse' => 'privacy:metadata:openai_chat_log:airesponse',
+                'timecreated' => 'privacy:metadata:openai_chat_log:timecreated'
              ],
-            'privacy:metadata:localai_chat_log'
+            'privacy:metadata:openai_chat_log'
         );
     
         return $collection;
@@ -67,7 +66,7 @@ class provider implements
             return;
         }
 
-        if ($DB->record_exists('block_localai_chat_log', ['userid' => $context->instanceid])) {
+        if ($DB->record_exists('block_openai_chat_log', ['userid' => $context->instanceid])) {
             $userlist->add_user($context->instanceid);
         }
     }
@@ -80,7 +79,7 @@ class provider implements
         $userid = $user->id;
 
         // Sent messages.
-        $sql = "SELECT id, userid, usermessage, airesponse, timecreated FROM {block_localai_chat_log} WHERE userid = :userid";
+        $sql = "SELECT id, userid, usermessage, airesponse, timecreated FROM {block_openai_chat_log} WHERE userid = :userid";
         $records = $DB->get_records_sql($sql, ["userid" => $userid]);
 
         if (!empty($records)) {
@@ -95,7 +94,7 @@ class provider implements
             }
     
             writer::with_context($context)->export_data(
-                [get_string('privacy:chatmessagespath', 'block_localai_chat')],
+                [get_string('privacy:chatmessagespath', 'block_openai_chat')],
                 $messages
             );
         }
@@ -105,7 +104,7 @@ class provider implements
         global $DB;
         // Only delete data for a user context.
         if ($context->contextlevel == CONTEXT_USER) {
-            $DB->delete_records('block_localai_chat_log', ['userid' => $context->instanceid]);
+            $DB->delete_records('block_openai_chat_log', ['userid' => $context->instanceid]);
         }
     }
 
@@ -114,7 +113,7 @@ class provider implements
         foreach ($contextlist as $context) {
             // Let's be super certain that we have the right information for this user here.
             if ($context->contextlevel == CONTEXT_USER && $contextlist->get_user()->id == $context->instanceid) {
-                $DB->delete_records('block_localai_chat_log', ['userid' => $context->instanceid]);
+                $DB->delete_records('block_openai_chat_log', ['userid' => $context->instanceid]);
             }
         }
     }
@@ -123,7 +122,7 @@ class provider implements
         global $DB;
         $context = $userlist->get_context();
         if ($context instanceof \context_user && in_array($context->instanceid, $userlist->get_userids())) {
-            $DB->delete_records('block_localai_chat_log', ['userid' => $context->instanceid]);
+            $DB->delete_records('block_openai_chat_log', ['userid' => $context->instanceid]);
         }
     }
 }

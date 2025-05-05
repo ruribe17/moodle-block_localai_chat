@@ -85,59 +85,79 @@ function fetch_assistants_array($block_id = null) {
  * @return Array: The list of model info
  */
 function get_models() {
-    global $CFG;
+    return [
+        "models" => [
+            'gpt-4o' => 'gpt-4o',
+            'gpt-4o-2024-11-20' => 'gpt-4o-2024-11-20',
+            'gpt-4o-2024-08-06' => 'gpt-4o-2024-08-06',
+            'gpt-4o-2024-05-13' => 'gpt-4o-2024-05-13',
+            'gpt-4o-mini-2024-07-18' => 'gpt-4o-mini-2024-07-18',
+            'gpt-4o-mini' => 'gpt-4o-mini',
+            'gpt-4-turbo-preview' => 'gpt-4-turbo-preview',
+            'gpt-4-turbo-2024-04-09' => 'gpt-4-turbo-2024-04-09',
+            'gpt-4-turbo' => 'gpt-4-turbo',
+            'gpt-4-32k-0314' => 'gpt-4-32k-0314',
+            'gpt-4-1106-preview' => 'gpt-4-1106-preview',
+            'gpt-4-0613' => 'gpt-4-0613',
+            'gpt-4-0314' => 'gpt-4-0314',
+            'gpt-4-0125-preview' => 'gpt-4-0125-preview',
+            'gpt-4' => 'gpt-4',
+            'gpt-3.5-turbo-16k-0613' => 'gpt-3.5-turbo-16k-0613',
+            'gpt-3.5-turbo-16k' => 'gpt-3.5-turbo-16k',
+            'gpt-3.5-turbo-1106' => 'gpt-3.5-turbo-1106',
+            'gpt-3.5-turbo-0125' => 'gpt-3.5-turbo-0125',
+            'gpt-3.5-turbo' => 'gpt-3.5-turbo',
+            'qwen2.5-14B-Instruct-1M' => 'qwen2.5-14B-Instruct-1M', 
+            'fastllama-3.2-1b-instruct' => 'fastllama-3.2-1b-instruct',
+            'qwen2.5-7B-Instruct-1M' => 'qwen2.5-7B-Instruct-1M',
+            'replete-llm-v2.5-qwen-7b' => 'replete-llm-v2.5-qwen-7b',
+            'gemmasutra-mini-2b-v1' => 'gemmasutra-mini-2b-v1',
+            'qwen2.5-14B-Instruct-1M' => 'qwen2.5-14B-Instruct-1M',
+            'smallthinker-3b-preview' => 'smallthinker-3b-preview',
+            'dolphin3.0-qwen2.5-3b'   => 'dolphin3.0-qwen2.5-3b',
+            'internlm3-8b-instruct'   => 'internlm3-8b-instruct',
+            'calme-2.3-phi3-4b'       => 'calme-2.3-phi3-4b', 
+            'smallthinker-3b-preview' => 'smallthinker-3b-preview'
+            
 
-    // Obtiene la URL base desde la configuración del plugin
-    $baseUrl = get_config('block_openai_chat', 'baseurl');
-   
 
-    // Valida que la URL base termine con '/api/v1/openai'
-    if (substr($baseUrl, -15) !== '/api/v1/openai') {
-        $baseUrl .= '/api/v1/openai'; // Añade el sufijo si no está presente
-    }
+        ],
+        "types" => [
+            'gpt-4o-2024-11-20'          =>  'chat',
+            'gpt-4o-2024-08-06'          =>  'chat',
+            'gpt-4o-2024-05-13'          =>  'chat',
+            'gpt-4o'                     =>  'chat',
+            'gpt-4o-mini-2024-07-18'     =>  'chat',
+            'gpt-4o-mini'                =>  'chat',
+            'gpt-4-turbo-preview'        =>  'chat',
+            'gpt-4-turbo-2024-04-09'     =>  'chat',
+            'gpt-4-turbo'                =>  'chat',
+            'gpt-4-32k-0314'             =>  'chat',
+            'gpt-4-1106-preview'         =>  'chat',
+            'gpt-4-0613'                 =>  'chat',
+            'gpt-4-0314'                 =>  'chat',
+            'gpt-4-0125-preview'         =>  'chat',
+            'gpt-4'                      =>  'chat',
+            'gpt-3.5-turbo-16k-0613'     =>  'chat',
+            'gpt-3.5-turbo-16k'          =>  'chat',
+            'gpt-3.5-turbo-1106'         =>  'chat',
+            'gpt-3.5-turbo-0125'         =>  'chat',
+            'gpt-3.5-turbo'              =>  'chat',
+            'qwen2.5-14B-Instruct-1M'    =>  'chat',
+            'fastllama-3.2-1b-instruct'  =>  'chat', 
+            'qwen2.5-7B-Instruct-1M'     =>  'chat',
+            'replete-llm-v2.5-qwen-7b'   =>  'chat',
+            'gemmasutra-mini-2b-v1'      =>  'chat',
+            'qwen2.5-14B-Instruct-1M'    =>  'chat',
+            'smallthinker-3b-preview'    =>  'chat',
+            'dolphin3.0-qwen2.5-3b'      =>  'chat',
+            'internlm3-8b-instruct'      =>  'chat',
+            'calme-2.3-phi3-4b'          =>  'chat',
+            'smallthinker-3b-preview'    =>  'chat'
 
-    // Obtiene el token de autorización desde la configuración del plugin
-    $token = get_config('block_openai_chat', 'apikey');
-    if (empty($token)) {
-        throw new \Exception('Token de autorización no configurado.');
-    }
-    // Configura el endpoint para modelos
-    $apiUrl = $baseUrl . '/models';
-
-    // Inicializa cURL
-    $ch = curl_init($apiUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-        'Authorization: Bearer ' . $token,
-        'accept: application/json'
-    ));
-
-    // Ejecuta la solicitud
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    // Procesa la respuesta
-    $data = json_decode($response, true);
-    if (!empty($token) && ($httpCode != 200 || empty($data['data']))) {
-        //throw new \Exception('Error al obtener modelos desde la API de anythingLLM.' . $token);
-        return "";
-    }
-    else {
-
-       // Clasifica todos los modelos como "chat"
-       $models = array_map(function($model) {
-         return [
-            'name' => $model['name'],
-            'model' => $model['model'],
-            'llm' => $model['llm'],
-            'type' => 'chat' // Clasificación explícita como modelos de chat
-        ];
-       }, $data['data']);
-       return $models;
-      }
-    }
-
+        ]
+    ];
+}
 
 /**
  * If setting is enabled, log the user's message and the AI response

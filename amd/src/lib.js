@@ -9,11 +9,11 @@ export const init = (data) => {
     // Initialize local data storage if necessary
     // If a thread ID exists for this block, make an API request to get existing messages
     if (api_type === 'assistant') {
-        chatData = localStorage.getItem("block_localai_chat_data")
+        chatData = localStorage.getItem("block_openai_chat_data")
         if (chatData) {
             chatData = JSON.parse(chatData)
             if (chatData[blockId] && chatData[blockId]['threadId'] && persistConvo === "1") {
-                fetch(`${M.cfg.wwwroot}/blocks/localai_chat/api/thread.php?thread_id=${chatData[blockId]['threadId']}`)
+                fetch(`${M.cfg.wwwroot}/blocks/openai_chat/api/thread.php?thread_id=${chatData[blockId]['threadId']}`)
                 .then(response => response.json())
                 .then(data => {
                     for (let message of data) {
@@ -23,7 +23,7 @@ export const init = (data) => {
                 // Some sort of error in the API call. Probably the thread no longer exists, so lets reset it
                 .catch(error => {
                     chatData[blockId] = {}
-                    localStorage.setItem("block_localai_chat_data", JSON.stringify(chatData));
+                    localStorage.setItem("block_openai_chat_data", JSON.stringify(chatData));
                 })
             // The block ID doesn't exist in the chat data object, so let's create it
             } else {
@@ -33,7 +33,7 @@ export const init = (data) => {
         } else {
             chatData = {[blockId]: {}}
         }
-        localStorage.setItem("block_localai_chat_data", JSON.stringify(chatData));
+        localStorage.setItem("block_openai_chat_data", JSON.stringify(chatData));
     }
 
     // Prevent sidebar from closing when osk pops up (hack for MDL-77957)
@@ -41,15 +41,15 @@ export const init = (data) => {
         event.stopImmediatePropagation();
     }, true);
 
-    document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_input`).addEventListener('keyup', e => {
+    document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_input`).addEventListener('keyup', e => {
         if (e.which === 13 && e.target.value !== "") {
             addToChatLog('user', e.target.value, blockId)
             createCompletion(e.target.value, blockId, api_type)
             e.target.value = ''
         }
     })
-    document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #go`).addEventListener('click', e => {
-        const input = document.querySelector('#localai_input')
+    document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #go`).addEventListener('click', e => {
+        const input = document.querySelector('#openai_input')
         if (input.value !== "") {
             addToChatLog('user', input.value, blockId)
             createCompletion(input.value, blockId, api_type)
@@ -57,26 +57,26 @@ export const init = (data) => {
         }
     })
 
-    document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #refresh`).addEventListener('click', e => {
+    document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #refresh`).addEventListener('click', e => {
         clearHistory(blockId)
     })
 
-    document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #popout`).addEventListener('click', e => {
+    document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #popout`).addEventListener('click', e => {
         if (document.querySelector('.drawer.drawer-right')) {
             document.querySelector('.drawer.drawer-right').style.zIndex = '1041'
         }
-        document.querySelector(`.block_localai_chat[data-instance-id='${blockId}']`).classList.toggle('expanded')
+        document.querySelector(`.block_openai_chat[data-instance-id='${blockId}']`).classList.toggle('expanded')
     })
 
     require(['core/str'], function(str) {
         var strings = [
             {
                 key: 'askaquestion',
-                component: 'block_localai_chat'
+                component: 'block_openai_chat'
             },
             {
                 key: 'erroroccurred',
-                component: 'block_localai_chat'
+                component: 'block_openai_chat'
             },
         ];
         str.get_strings(strings).then((results) => {
@@ -93,10 +93,10 @@ export const init = (data) => {
  * @param {int} blockId The ID of the block to manipulate
  */
 const addToChatLog = (type, message, blockId) => {
-    let messageContainer = document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_chat_log`)
+    let messageContainer = document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_chat_log`)
     
     const messageElem = document.createElement('div')
-    messageElem.classList.add('localai_message')
+    messageElem.classList.add('openai_message')
     for (let className of type.split(' ')) {
         messageElem.classList.add(className)
     }
@@ -110,22 +110,22 @@ const addToChatLog = (type, message, blockId) => {
         messageElem.style.width = (messageText.offsetWidth + 40) + "px"
     }
     messageContainer.scrollTop = messageContainer.scrollHeight
-    messageContainer.closest('.block_localai_chat > div').scrollTop = messageContainer.scrollHeight
+    messageContainer.closest('.block_openai_chat > div').scrollTop = messageContainer.scrollHeight
 }
 
 /**
  * Clears the thread ID from local storage and removes the messages from the UI in order to refresh the chat
  */
 const clearHistory = (blockId) => {
-    chatData = localStorage.getItem("block_localai_chat_data")
+    chatData = localStorage.getItem("block_openai_chat_data")
     if (chatData) {
         chatData = JSON.parse(chatData)
         if (chatData[blockId]) {
             chatData[blockId] = {}
-            localStorage.setItem("block_localai_chat_data", JSON.stringify(chatData));
+            localStorage.setItem("block_openai_chat_data", JSON.stringify(chatData));
         }
     }
-    document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_chat_log`).innerHTML = ""
+    document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_chat_log`).innerHTML = ""
 }
 
 /**
@@ -140,7 +140,7 @@ const createCompletion = (message, blockId, api_type) => {
 
     // If the type is assistant, attempt to fetch a thread ID
     if (api_type === 'assistant') {
-        chatData = localStorage.getItem("block_localai_chat_data")
+        chatData = localStorage.getItem("block_openai_chat_data")
         if (chatData) {
             chatData = JSON.parse(chatData)
             if (chatData[blockId]) {
@@ -154,13 +154,13 @@ const createCompletion = (message, blockId, api_type) => {
 
     const history = buildTranscript(blockId)
 
-    document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #control_bar`).classList.add('disabled')
-    document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_input`).classList.remove('error')
-    document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_input`).placeholder = questionString
-    document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_input`).blur()
+    document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #control_bar`).classList.add('disabled')
+    document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_input`).classList.remove('error')
+    document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_input`).placeholder = questionString
+    document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_input`).blur()
     addToChatLog('bot loading', '...', blockId);
 
-    fetch(`${M.cfg.wwwroot}/blocks/localai_chat/api/completion.php`, {
+    fetch(`${M.cfg.wwwroot}/blocks/openai_chat/api/completion.php`, {
         method: 'POST',
         body: JSON.stringify({
             message: message,
@@ -170,9 +170,9 @@ const createCompletion = (message, blockId, api_type) => {
         })
     })
     .then(response => {
-        let messageContainer = document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_chat_log`)
+        let messageContainer = document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_chat_log`)
         messageContainer.removeChild(messageContainer.lastElementChild)
-        document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #control_bar`).classList.remove('disabled')
+        document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #control_bar`).classList.remove('disabled')
 
         if (!response.ok) {
             throw Error(response.statusText)
@@ -185,18 +185,18 @@ const createCompletion = (message, blockId, api_type) => {
             addToChatLog('bot', data.message, blockId)
             if (data.thread_id) {
                 chatData[blockId]['threadId'] = data.thread_id
-                localStorage.setItem("block_localai_chat_data", JSON.stringify(chatData));
+                localStorage.setItem("block_openai_chat_data", JSON.stringify(chatData));
             }
         } catch (error) {
             console.log(error)
             addToChatLog('bot', data.error.message, blockId)
         }
-        document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_input`).focus()
+        document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_input`).focus()
     })
     .catch(error => {
         console.log(error)
-        document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_input`).classList.add('error')
-        document.querySelector(`.block_localai_chat[data-instance-id='${blockId}'] #localai_input`).placeholder = errorString
+        document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_input`).classList.add('error')
+        document.querySelector(`.block_openai_chat[data-instance-id='${blockId}'] #openai_input`).placeholder = errorString
     })
 }
 
@@ -207,8 +207,8 @@ const createCompletion = (message, blockId, api_type) => {
  */
 const buildTranscript = (blockId) => {
     let transcript = []
-    document.querySelectorAll(`.block_localai_chat[data-instance-id='${blockId}'] .localai_message`).forEach((message, index) => {
-        if (index === document.querySelectorAll(`.block_localai_chat[data-instance-id='${blockId}'] .localai_message`).length - 1) {
+    document.querySelectorAll(`.block_openai_chat[data-instance-id='${blockId}'] .openai_message`).forEach((message, index) => {
+        if (index === document.querySelectorAll(`.block_openai_chat[data-instance-id='${blockId}'] .openai_message`).length - 1) {
             return
         }
 

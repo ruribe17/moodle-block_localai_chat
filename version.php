@@ -17,16 +17,15 @@
 /**
  * Version information
  *
- * @package    block_localai_chat
+ * @package    block_openai_chat
  * @copyright  2022 Bryce Yoder <me@bryceyoder.com>
- * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'block_localai_chat';
-$plugin->version = 2025030100;
+$plugin->component = 'block_openai_chat';
+$plugin->version = 2025011700;
 $plugin->requires = 2022041600;
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->release = '0.0.1-alpha';
+$plugin->maturity = MATURITY_STABLE;
+$plugin->release = '3.0.0';

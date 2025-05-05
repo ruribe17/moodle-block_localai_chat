@@ -17,18 +17,17 @@
 /**
  * Class providing completions for assistant API
  *
- * @package    block_localai_chat
+ * @package    block_openai_chat
  * @copyright  2023 Bryce Yoder <me@bryceyoder.com>
- * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename to localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 */
 
-namespace block_localai_chat\completion;
+namespace block_openai_chat\completion;
 
-use block_localai_chat\completion;
+use block_openai_chat\completion;
 defined('MOODLE_INTERNAL') || die;
 
-class assistant extends \block_localai_chat\completion {
+class assistant extends \block_openai_chat\completion {
 
     private $thread_id;
 
@@ -44,7 +43,7 @@ class assistant extends \block_localai_chat\completion {
 
     /**
      * Given everything we know after constructing the parent, create a completion by constructing the prompt and making the api call
-     * @return JSON: The API response from localai
+     * @return JSON: The API response from OpenAI
      */
     public function create_completion($context) {
         $this->add_message_to_thread();
@@ -57,11 +56,11 @@ class assistant extends \block_localai_chat\completion {
             'CURLOPT_HTTPHEADER' => array(
                 'Authorization: Bearer ' . $this->apikey,
                 'Content-Type: application/json',
-                'localai-Beta: assistants=v2'
+                'OpenAI-Beta: assistants=v2'
             ),
         ));
 
-        $response = $curl->post("https://api.localai.com/v1/threads");
+        $response = $curl->post("https://localai.starosa.edu.pe/v1/threads");
         $response = json_decode($response);
 
         return $response->id;
@@ -78,12 +77,12 @@ class assistant extends \block_localai_chat\completion {
             'CURLOPT_HTTPHEADER' => array(
                 'Authorization: Bearer ' . $this->apikey,
                 'Content-Type: application/json',
-                'localai-Beta: assistants=v2'
+                'OpenAI-Beta: assistants=v2'
             ),
         ));
 
         $response = $curl->post(
-            "https://api.localai.com/v1/threads/" . $this->thread_id ."/messages", 
+            "https://localai.starosa.edu.pe/v1/threads/" . $this->thread_id ."/messages", 
             json_encode($curlbody)
         );
         $response = json_decode($response);
@@ -92,8 +91,8 @@ class assistant extends \block_localai_chat\completion {
     }
 
     /**
-     * Make the actual API call to localai
-     * @return JSON: The response from localai
+     * Make the actual API call to OpenAI
+     * @return JSON: The response from OpenAI
      */
     private function run() {
 
@@ -109,12 +108,12 @@ class assistant extends \block_localai_chat\completion {
             'CURLOPT_HTTPHEADER' => array(
                 'Authorization: Bearer ' . $this->apikey,
                 'Content-Type: application/json',
-                'localai-Beta: assistants=v2'
+                'OpenAI-Beta: assistants=v2'
             ),
         ));
 
         $response = $curl->post(
-            "https://api.localai.com/v1/threads/" . $this->thread_id . "/runs", 
+            "https://api.openai.com/v1/threads/" . $this->thread_id . "/runs", 
             json_encode($curlbody)
         );
         $response = json_decode($response);
@@ -125,16 +124,7 @@ class assistant extends \block_localai_chat\completion {
 
         $run_id = $response->id;
         $run_completed = false;
-        $iters = 0;
         while (!$run_completed) {
-            $iters++;
-            if ($iters >= 60) {
-                return [
-                    "id" => 0,
-                    "message" => get_string('localaitimedout', 'block_cloudlearn_ai'),
-                    "thread_id" => 0
-                ];
-            }
             $run_completed = $this->check_run_status($run_id);
             sleep(1);
         }
@@ -144,10 +134,10 @@ class assistant extends \block_localai_chat\completion {
             'CURLOPT_HTTPHEADER' => array(
                 'Authorization: Bearer ' . $this->apikey,
                 'Content-Type: application/json',
-                'localai-Beta: assistants=v2'
+                'OpenAI-Beta: assistants=v2'
             ),
         ));
-        $response = $curl->get("https://api.localai.com/v1/threads/" . $this->thread_id . '/messages');
+        $response = $curl->get("https://api.openai.com/v1/threads/" . $this->thread_id . '/messages');
         $response = json_decode($response);
 
         return [
@@ -163,14 +153,14 @@ class assistant extends \block_localai_chat\completion {
             'CURLOPT_HTTPHEADER' => array(
                 'Authorization: Bearer ' . $this->apikey,
                 'Content-Type: application/json',
-                'localai-Beta: assistants=v2'
+                'OpenAI-Beta: assistants=v2'
             ),
         ));
 
-        $response = $curl->get("https://api.localai.com/v1/threads/" . $this->thread_id . "/runs/" . $run_id);
+        $response = $curl->get("https://api.openai.com/v1/threads/" . $this->thread_id . "/runs/" . $run_id);
         $response = json_decode($response);
         
-        if ($response->status === 'completed' || property_exists($response, 'error')) {
+        if ($response->status === 'completed') {
             return true;
         }
         return false;

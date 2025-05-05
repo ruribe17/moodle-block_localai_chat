@@ -17,13 +17,12 @@
 /**
  * Log table
  *
- * @package    block_localai_chat
+ * @package    block_openai_chat
  * @copyright  2024 Bryce Yoder <me@bryceyoder.com>
- * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename to localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace block_localai_chat;
+namespace block_openai_chat;
 defined('MOODLE_INTERNAL') || die;
 
 class report extends \table_sql {

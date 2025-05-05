@@ -17,13 +17,12 @@
 /**
  * Base completion object class
  *
- * @package    block_localai_chat
+ * @package    block_openai_chat
  * @copyright  2023 Bryce Yoder <me@bryceyoder.com>
- * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename to localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 */
 
-namespace block_localai_chat;
+namespace block_openai_chat;
 defined('MOODLE_INTERNAL') || die;
 
 class completion {
@@ -56,15 +55,15 @@ class completion {
     public function __construct($model, $message, $history, $block_settings) {
         // Set default values
         $this->model = $model;
-        $this->apikey = get_config('block_localai_chat', 'apikey');
+        $this->apikey = get_config('block_openai_chat', 'apikey');
 
         // We fetch defaults for both chat and assistant APIs, even though only one can be active at a time
         // In the past, multiple different completion classes shared API types, so this might happen again
         // Any settings that don't apply to the current API type are just ignored
 
-        $this->prompt = $this->get_setting('prompt', get_string('defaultprompt', 'block_localai_chat'));
-        $this->assistantname = $this->get_setting('assistantname', get_string('defaultassistantname', 'block_localai_chat'));
-        $this->username = $this->get_setting('username', get_string('defaultusername', 'block_localai_chat'));
+        $this->prompt = $this->get_setting('prompt', get_string('defaultprompt', 'block_openai_chat'));
+        $this->assistantname = $this->get_setting('assistantname', get_string('defaultassistantname', 'block_openai_chat'));
+        $this->username = $this->get_setting('username', get_string('defaultusername', 'block_openai_chat'));
 
         $this->temperature = $this->get_setting('temperature', 0.5);
         $this->maxlength = $this->get_setting('maxlength', 500);
@@ -76,7 +75,7 @@ class completion {
         $this->instructions = $this->get_setting('instructions');
 
         // Then override with block settings if applicable
-        if (get_config('block_localai_chat', 'allowinstancesettings') === "1") {
+        if (get_config('block_openai_chat', 'allowinstancesettings') === "1") {
             foreach ($block_settings as $name => $value) {
                 if ($value) {
                     $this->$name = $value;
@@ -97,7 +96,7 @@ class completion {
      * @return mixed: The saved or default value
      */
     protected function get_setting($settingname, $default_value = null) {
-        $setting = get_config('block_localai_chat', $settingname);
+        $setting = get_config('block_openai_chat', $settingname);
         if (!$setting && $setting != 0) {
             $setting = $default_value;
         }
@@ -109,11 +108,11 @@ class completion {
      * @param string localsourceoftruth: The instance-level source of truth we got from the API call 
      */
     private function build_source_of_truth($localsourceoftruth) {
-        $sourceoftruth = get_config('block_localai_chat', 'sourceoftruth');
+        $sourceoftruth = get_config('block_openai_chat', 'sourceoftruth');
     
         if ($sourceoftruth || $localsourceoftruth) {
             $sourceoftruth = 
-                get_string('sourceoftruthpreamble', 'block_localai_chat')
+                get_string('sourceoftruthpreamble', 'block_openai_chat')
                 . $sourceoftruth . "\n\n"
                 . $localsourceoftruth . "\n\n";
             }

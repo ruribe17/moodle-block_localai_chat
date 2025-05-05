@@ -1,4 +1,4 @@
-<?php
+ <?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -8,19 +8,11 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-/**
- * Class providing completions for chat models (3.5 and up)
- *
- * @package    block_openai_chat
- * @copyright  2023 Bryce Yoder <me@bryceyoder.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-*/
+// along with Moodle. If not, see http://www.gnu.org/licenses/.
 
 namespace block_openai_chat\completion;
 
@@ -28,16 +20,16 @@ use block_openai_chat\completion;
 defined('MOODLE_INTERNAL') || die;
 
 class chat extends \block_openai_chat\completion {
-
     public function __construct($model, $message, $history, $block_settings, $thread_id = null) {
         parent::__construct($model, $message, $history, $block_settings);
     }
 
     /**
-     * Given everything we know after constructing the parent, create a completion by constructing the prompt and making the api call
+     * Create a completion by constructing the prompt and making the API call
+     * @param bool $stream: Whether to stream the response or not
      * @return JSON: The API response from OpenAI
      */
-    public function create_completion($context) {
+    public function create_completion($context, $stream = true) {
         if ($this->sourceoftruth) {
             $this->sourceoftruth = format_string($this->sourceoftruth, true, ['context' => $context]);
             $this->prompt .= get_string('sourceoftruthreinforcement', 'block_openai_chat');
@@ -50,13 +42,12 @@ class chat extends \block_openai_chat\completion {
 
         array_push($history_json, ["role" => "user", "content" => $this->message]);
 
-        $response_data = $this->make_api_call($history_json);
-        return $response_data;
+        return $this->make_api_call($history_json, $stream);
     }
 
     /**
      * Format the history JSON into a string that we can pass in the prompt
-     * @return string: The string representing the chat history to add to the prompt
+     * @return array: The formatted chat history
      */
     protected function format_history() {
         $history = [];
@@ -69,9 +60,11 @@ class chat extends \block_openai_chat\completion {
 
     /**
      * Make the actual API call to OpenAI
+     * @param array $history: The chat history
+     * @param bool $stream: Whether to stream the response or not
      * @return JSON: The response from OpenAI
      */
-    private function make_api_call($history) {
+    private function make_api_call($history, $stream) {
         $curlbody = [
             "model" => $this->model,
             "messages" => $history,
@@ -80,36 +73,65 @@ class chat extends \block_openai_chat\completion {
             "top_p" => (float) $this->topp,
             "frequency_penalty" => (float) $this->frequency,
             "presence_penalty" => (float) $this->presence,
-            "stop" => $this->username . ":"
+            "stream" => $stream // Enable streaming
         ];
 
-        // Obtiene la URL base desde la configuración del plugin
-        $baseUrl = get_config('block_openai_chat', 'baseurl');
-        
         $curl = new \curl();
         $curl->setopt(array(
             'CURLOPT_HTTPHEADER' => array(
                 'Authorization: Bearer ' . $this->apikey,
                 'Content-Type: application/json'
             ),
+            'CURLOPT_RETURNTRANSFER' => true,
+            'CURLOPT_TIMEOUT' => 60 // Set timeout to 60 seconds
         ));
 
-        // Define la URL completa para la solicitud
-        $apiUrl = $baseUrl . '/chat/completions'; // Ajusta según el endpoint que uses
+        if ($stream) {
+            $ch = curl_init("http://10.1.10.243:8080/v1/chat/completions");
 
-        $response = $curl->post($apiUrl, json_encode($curlbody));
-        $response = json_decode($response);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $this->apikey,
+            'Content-Type: application/json'
+        ]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($curlbody));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) use (&$response_body) {
+            $lines = explode("\n", trim($data));
+            foreach ($lines as $line) {
+                if (strpos($line, "data: ") === 0) {
+                    $json = trim(substr($line, 6));
+                    if ($json === "[DONE]") {
+                        return strlen($data);
+                    }
+                    $response = json_decode($json, true);
+                    if (isset($response["choices"][0]["delta"]["content"])) {
+                        echo $response["choices"][0]["delta"]["content"];
+                        flush();
+                    }
+                }
+            }
+            return strlen($data);
+        });
 
-        $message = null;
-        if (property_exists($response, 'error')) {
-            $message = 'ERROR: ' . $response->error->message;
+        curl_exec($ch);
+        curl_close($ch);
+        return ["message" => "Streaming complete"];            
         } else {
-            $message = $response->choices[0]->message->content;
-        }
+            $response = $curl->post("http://10.1.10.243:8080/v1/chat/completions", json_encode($curlbody));
+            $response = json_decode($response);
 
-        return [
-            "id" => property_exists($response, 'id') ? $response->id : 'error',
-            "message" => $message
-        ];
+            $message = null;
+            if (property_exists($response, 'error')) {
+                $message = 'ERROR: ' . $response->error->message;
+            } else {
+                $message = $response->choices[0]->message->content;
+            }
+
+            return [
+                "id" => property_exists($response, 'id') ? $response->id : 'error',
+                "message" => $message
+            ];
+        }
     }
-}

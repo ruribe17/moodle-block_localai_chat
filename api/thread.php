@@ -17,33 +17,32 @@
 /**
  * API endpoint for retrieving thread history
  *
- * @package    block_localai_chat
+ * @package    block_openai_chat
  * @copyright  2023 Bryce Yoder <me@bryceyoder.com>
- * @copyright  2025 Renzo Uribe <renzouribe2010@gmail.com> (modifications: rename to localai_chat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require_once('../../../config.php');
 require_once($CFG->libdir . '/filelib.php');
-require_once($CFG->dirroot . '/blocks/localai_chat/lib.php');
+require_once($CFG->dirroot . '/blocks/openai_chat/lib.php');
 
-if (get_config('block_localai_chat', 'restrictusage') !== "0") {
+if (get_config('block_openai_chat', 'restrictusage') !== "0") {
     require_login();
 }
 
 $thread_id = required_param('thread_id', PARAM_NOTAGS);
-$apikey = get_config('block_localai_chat', 'apikey');
+$apikey = get_config('block_openai_chat', 'apikey');
 
 $curl = new \curl();
 $curl->setopt(array(
     'CURLOPT_HTTPHEADER' => array(
         'Authorization: Bearer ' . $apikey,
         'Content-Type: application/json',
-        'localai-Beta: assistants=v2'
+        'OpenAI-Beta: assistants=v2'
     ),
 ));
 
-$response = $curl->get("https://api.localai.com/v1/threads/$thread_id/messages");
+$response = $curl->get("https://localai.starosa.edu.pe/v1/threads/$thread_id/messages");
 $response = json_decode($response);
 
 if (property_exists($response, 'error')) {
