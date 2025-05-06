@@ -1,99 +1,12 @@
-<?php
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-/**
- * General plugin functions
- *
- * @package    block_openai_chat
- * @copyright  2023 Bryce Yoder <me@bryceyoder.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-defined('MOODLE_INTERNAL') || die();
-
-/**
- * Fetch the current API type from the database, defaulting to "chat"
- * @return String: the API type (chat|azure|assistant)
- */
-function get_type_to_display() {
-    $stored_type = get_config('block_openai_chat', 'type');
-    if ($stored_type) {
-        return $stored_type;
-    }
-    
-    return 'chat';
-}
-
-/**
- * Use an API key to fetch a list of assistants from a user's OpenAI account
- * @param Int (optional): The ID of a block instance. If this is passed, the API can be pulled from the block rather than the site level.
- * @return Array: The list of assistants
- */
-function fetch_assistants_array($block_id = null) {
-    global $DB;
-
-    if (!$block_id) {
-        $apikey = get_config('block_openai_chat', 'apikey');
-    } else {
-        $instance_record = $DB->get_record('block_instances', ['blockname' => 'openai_chat', 'id' => $block_id], '*');
-        $instance = block_instance('openai_chat', $instance_record);
-        $apikey = $instance->config->apikey ? $instance->config->apikey : get_config('block_openai_chat', 'apikey');
-    }
-
-    if (!$apikey) {
-        return [];
-    }
-
-    $curl = new \curl();
-    $curl->setopt(array(
-        'CURLOPT_HTTPHEADER' => array(
-            'Authorization: Bearer ' . $apikey,
-            'Content-Type: application/json',
-            'OpenAI-Beta: assistants=v2'
-        ),
-    ));
-
-    $response = $curl->get("https://localai.starosa.edu.pe/v1/assistants?order=desc");
-    $response = json_decode($response);
-    $assistant_array = [];
-    if (property_exists($response, 'data')) {
-        foreach ($response->data as $assistant) {
-            $assistant_array[$assistant->id] = $assistant->name;
-        }
-    }
-
-    return $assistant_array;
-}
-
-/**
- * Return a list of available models, and the type of each model.
- * (Type used to be relevant before OpenAI released the Assistant API. Currently it is no longer useful as all models are of type "chat,"
- * but I left it here in case the API is changed significantly in the future)
- * @return Array: The list of model info
- */
 function get_models() {
     global $CFG;
 
     // Obtiene la URL base desde la configuración del plugin
-    $baseUrl = get_config('block_openai_chat', 'baseurl');
-   
+    $baseUrl = rtrim(get_config('block_openai_chat', 'baseurl'), '/');
 
-    // Valida que la URL base termine con '/api/v1/openai'
-    if (substr($baseUrl, -15) !== '/api/v1/openai') {
-        $baseUrl .= '/api/v1/openai'; // Añade el sufijo si no está presente
+    // Asegura que no se duplique el sufijo
+    if (!preg_match('#/api/v1/openai$#', $baseUrl)) {
+    $baseUrl .= '/api/v1/openai';
     }
 
     // Obtiene el token de autorización desde la configuración del plugin
@@ -115,58 +28,40 @@ function get_models() {
     // Ejecuta la solicitud
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $ph = curl_getinfo($ch);
+    $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+    $urlUsed = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
     curl_close($ch);
+    if ($httpCode !== 200) {
+        throw new \Exception('Error en la solicitud HTTP: Código ' . $httpCode . '. Respuesta: ' . $response);
+    }
+
+    // Limpia el contenido para evitar BOM o caracteres extraños
+    $response = preg_replace('/^[\x00-\x1F]/', '', $response);
 
     // Procesa la respuesta
     $data = json_decode($response, true);
-    if (!empty($token) && ($httpCode != 200 || empty($data['data']))) {
-        //throw new \Exception('Error al obtener modelos desde la API de anythingLLM.' . $token);
-        return "";
+    if (json_last_error() !== JSON_ERROR_NONE) {
+    } 
+
+    // Extrae la lista de modelos desde la clave 'data'
+    if (!isset($data['data']) || !is_array($data['data'])) {
+       throw new \Exception('Formato inesperado en la respuesta de la API.');
     }
-    else {
+    //if (!empty($token) && ($httpCode != 200 || empty($data['data']))) {
+    //    //throw new \Exception('Error al obtener modelos desde la API de anythingLLM.' . $token);
+    //    return "";
+    //}
+    //else {
 
        // Clasifica todos los modelos como "chat"
-       $models = array_map(function($model) {
-         return [
+    $models = array_map(function($model) {
+       return [
             'name' => $model['name'],
             'model' => $model['model'],
-            'llm' => $model['llm'],
-            'type' => 'chat' // Clasificación explícita como modelos de chat
-        ];
-       }, $data['data']);
-       return $models;
-      }
-    }
+            'type' => 'chat' // Establece el tipo como "chat" según el código original
+       ];
+    }, $data['data']);
 
-
-/**
- * If setting is enabled, log the user's message and the AI response
- * @param string usermessage: The text sent from the user
- * @param string airesponse: The text returned by the AI 
- */
-function log_message($usermessage, $airesponse, $context) {
-    global $USER, $DB;
-
-    if (!get_config('block_openai_chat', 'logging')) {
-        return;
-    }
-
-    $DB->insert_record('block_openai_chat_log', (object) [
-        'userid' => $USER->id,
-        'usermessage' => $usermessage,
-        'airesponse' => $airesponse,
-        'contextid' => $context->id,
-        'timecreated' => time()
-    ]);
-}
-
-function block_openai_chat_extend_navigation_course($nav, $course, $context) {
-    if ($nav->get('coursereports')) {
-        $nav->get('coursereports')->add(
-            get_string('openai_chat_logs', 'block_openai_chat'),
-            new moodle_url('/blocks/openai_chat/report.php', ['courseid' => $course->id]),
-            navigation_node::TYPE_SETTING,
-            null
-        );
-    }
+    return $models;
 }
