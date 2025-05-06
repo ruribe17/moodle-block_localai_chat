@@ -212,13 +212,20 @@ if ($hassiteconfig) {
         if ($type === 'assistant') {
 
         } else {
-             
+            
+		$models = get_models();
+		$choices = [];
+
+		foreach ($models as $model) {
+    		  $choices[$model['model']] = $model['name'];
+		}
+
             $settings->add(new admin_setting_configselect(
                 'block_openai_chat/model',
                 get_string('model', 'block_openai_chat'),
                 get_string('modeldesc', 'block_openai_chat'),
                 'text-davinci-003',
-                get_models()['models']
+                $choices
             ));
 
             $settings->add(new admin_setting_configtext(
