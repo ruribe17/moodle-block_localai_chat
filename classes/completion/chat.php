@@ -42,7 +42,7 @@ class chat extends \block_openai_chat\completion {
             $this->sourceoftruth = format_string($this->sourceoftruth, true, ['context' => $context]);
             $this->prompt .= get_string('sourceoftruthreinforcement', 'block_openai_chat');
         }
-        $this->prompt .= "\n\n";
+        $this->prompt .= "/no_think \n\n";
 
         $history_json = $this->format_history();
         array_unshift($history_json, ["role" => "system", "content" => $this->prompt]);
