@@ -69,14 +69,48 @@ class block_openai_chat extends block_base {
             <script>
                 var assistantName = ' . json_encode($assistantname) . ';
                 var userName = ' . json_encode($username) . ';
+                function padUserMessage(messageElement) {
+                    const text = messageElement.textContent || messageElement.innerText;
+                    const paddedText = text.padStart(12, " "); 
+                    messageElement.textContent = paddedText;
+                }
+                // Ejemplo: Aplicar a todos los mensajes del usuario
+                document.querySelectorAll(".block_openai_chat .openai_message.user").forEach(message => {
+                    padUserMessage(message);
+                });
             </script>
 
             <style>
                 ' . $showlabelscss . '
                 .openai_message.user:before {
-                    content: "' . addslashes($username_css) . '";
-                    display: inline-block;
-                    max-width: 100%;
+                    content: "' . addslashes($username) . '";
+                    font-weight: bold !important;
+                    color: #007bff !important;
+                    font-size: 16px !important;
+                    margin-bottom: 5px !important;
+                    display: block !important;
+                    position: absolute;
+                    top: -1.5rem;
+                    right: 0;
+                    left: auto;
+                    padding-right: 5px; /* Espacio adicional para evitar desbordamiento */
+                    white-space: nowrap; /* Evita que el texto se saltee de línea */
+                    overflow: visible; /* Permite que el texto se muestre completamente */
+                    z-index: 1; /* Asegura que el nombre no se corte por el contenedor */      
+                }
+                .block_openai_chat .openai_message.user {
+                   align-self: flex-end;
+                   text-align: right;
+                   max-width: 80% !important;
+                   background-color: #f9f9f9 !important;
+                   padding: 20px 15px !important; /* Aumentado el padding vertical */
+                   border-radius: 8px !important;
+                   font-size: 14px !important;
+                   margin-top: 15px !important;
+                   display: flex;
+                   flex-direction: column;
+                   white-space: normal; /* Permite que el texto se saltee de línea */
+                   overflow: visible; /* Evita corte de contenido */                
                 }
                 .openai_message.bot:before {
                     content: "' . addslashes($assistantname) . '";
